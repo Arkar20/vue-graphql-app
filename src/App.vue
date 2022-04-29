@@ -1,26 +1,61 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+	<button @click="handlePostCreate">Post</button>
+	<ul>
+		<li v-for="post in posts" v-text="post.title" :key="post.id"></li>
+	</ul>
 </template>
 
-<script>
-import HelloWorld from './components/HelloWorld.vue'
+<script setup>
+import { ref, onMounted } from "vue";
 
-export default {
-  name: 'App',
-  components: {
-    HelloWorld
+const posts = ref([]);
+
+onMounted(() => {
+	fetch("http://127.0.0.1:8000/graphql", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			query: `query{
+  posts{
+    data{
+      title
+      desc
+      id
+    }
   }
-}
-</script>
+}`,
+		}),
+	})
+		.then(res => res.json())
+		.then(res => {
+			console.log(res.data);
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
+			posts.value = res.data.posts.data;
+		});
+});
+
+const handlePostCreate = () => {
+	fetch("http://127.0.0.1:8000/graphql", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			query: `mutation{
+  createPost(user_id:1,title:"vue",desc:"from vue"){
+    title
+    desc
+  }
+}`,
+		}),
+	})
+		.then(res => res.json())
+		.then(res => {
+			console.log(res.data);
+
+			posts.value = res.data.posts.data;
+		});
+};
+</script>
